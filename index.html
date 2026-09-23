@@ -916,7 +916,7 @@
 // CONFIG
 // ============================================================
 const API_BASE = 'https://new-api-3thk.onrender.com';
-const SESSION_KEY = 'mdz_session_v8';
+const SESSION_KEY = 'mdz_session_v9';
 
 // ============================================================
 // TOASTS
@@ -934,7 +934,7 @@ function toast(msg, type = 'ok', dur = 3200) {
 }
 
 // ============================================================
-// LOGIN — cascada de endpoints (el que funciona)
+// LOGIN — header X-License-Key (el que funciona)
 // ============================================================
 async function doLogin() {
   const input = document.getElementById('keyInput');
@@ -942,101 +942,66 @@ async function doLogin() {
   const btnText = document.getElementById('btnText');
   const key = input.value.trim();
 
-  if (!key) {
-    toast('Insira uma key', 'warn');
-    input.focus();
-    return;
-  }
+  if (!key) { toast('Insira uma key', 'warn'); input.focus(); return; }
 
   btn.disabled = true;
   input.disabled = true;
+  btnText.innerHTML = '<span class="spinner"></span>&nbsp; VERIFICANDO...';
 
-  const attempts = [
-    { url: '/api/verify',       body: { key } },
-    { url: '/api/verify',       body: { password: key } },
-    { url: '/api/verify',       body: { api_key: key } },
-    { url: '/verify',           body: { key } },
-    { url: '/auth',             body: { key } },
-    { url: '/verify/token',     body: { token: key } },
-    { url: '/api/verify/token', body: { token: key } },
-  ];
-
-  let lastDetail = 'credencial inválida';
-  let ok = false;
-
-  for (let i = 0; i < attempts.length; i++) {
-    const a = attempts[i];
-    btnText.innerHTML = '<span class="spinner"></span>&nbsp; PROBANDO ' + (i + 1) + '/' + attempts.length;
-
-    try {
-      const res = await fetchWithTimeout(API_BASE + a.url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify(a.body)
-      });
-
-      const data = await safeJson(res);
-
-      if (isValidVerify(data)) {
-        acceptLogin(data, key, a.url);
-        ok = true;
-        break;
-      }
-
-      if (data && (data.detail || data.message || data.error)) {
-        lastDetail = String(data.detail || data.message || data.error);
-      }
-    } catch (err) {
-      console.warn('[login try ' + (i+1) + ']', err);
-      if (err.name === 'AbortError') lastDetail = 'timeout en ' + a.url;
-    }
+  // device id random persistente por sesión
+  let deviceId = sessionStorage.getItem('mdz_device_id');
+  if (!deviceId) {
+    deviceId = 'web-' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+    sessionStorage.setItem('mdz_device_id', deviceId);
   }
+  const userId = sessionStorage.getItem('mdz_user_id') || 'peter-user';
 
-  if (!ok) {
-    toast(lastDetail.slice(0, 100), 'err', 5000);
+  try {
+    const res = await fetchWithTimeout(API_BASE + '/api/verify', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'X-License-Key': key,
+        'X-Device-Id': deviceId,
+        'X-User-Id': userId
+      }
+    });
+
+    const data = await safeJson(res);
+    console.log('[/api/verify]', res.status, data);
+
+    if (res.ok && data && data.success === true) {
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+        password: key,
+        token: data.token || null,
+        expires_at: data.expires_at || null,
+        deviceId: data.device_id || deviceId,
+        user: data.user_identifier || userId,
+        ts: Date.now()
+      }));
+      toast('Acceso concedido', 'ok');
+      setTimeout(enterPanel, 400);
+      return;
+    }
+
+    const detail = (data && (data.error || data.detail || data.message)) || 'credencial inválida';
+    toast(String(detail).slice(0, 100), 'err', 5000);
     input.style.borderColor = 'var(--red)';
     setTimeout(() => input.style.borderColor = '', 1200);
+
+  } catch (err) {
+    console.error('[login]', err);
+    toast('Error de conexión con el servidor', 'err', 5000);
+  } finally {
+    btn.disabled = false;
+    input.disabled = false;
+    btnText.textContent = 'ENTRAR';
   }
-
-  btn.disabled = false;
-  input.disabled = false;
-  btnText.textContent = 'ENTRAR';
-}
-
-function isValidVerify(d) {
-  if (!d) return false;
-  if (d === true || d === 'true') return true;
-  if (typeof d === 'string' && /ok|valid|success|autorizado|bienvenido|welcome/i.test(d)) return true;
-  if (typeof d === 'object') {
-    if (d.valid === false || d.ok === false || d.success === false || d.error) return false;
-    return !!(
-      d.valid === true || d.valid === 'true' ||
-      d.ok === true || d.ok === 'true' ||
-      d.success === true || d.success === 'true' ||
-      d.status === 'ok' || d.status === 'success' || d.status === 'valid' ||
-      d.access === true || d.authorized === true ||
-      d.token || d.access_token || d.session
-    );
-  }
-  return false;
-}
-
-function acceptLogin(data, key, usedEndpoint) {
-  const token = (data && (data.token || data.access_token || data.session)) || null;
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify({
-    password: key,
-    token,
-    endpoint: usedEndpoint,
-    ts: Date.now()
-  }));
-  console.log('[login OK via]', usedEndpoint, data);
-  toast('Acceso concedido', 'ok');
-  setTimeout(enterPanel, 400);
 }
 
 async function fetchWithTimeout(url, opts) {
   const controller = new AbortController();
-  const t = setTimeout(() => controller.abort(), 12000);
+  const t = setTimeout(() => controller.abort(), 15000);
   try { return await fetch(url, { ...opts, signal: controller.signal }); }
   finally { clearTimeout(t); }
 }
