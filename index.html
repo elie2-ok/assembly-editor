@@ -14,6 +14,7 @@
     --cyan: #00d4ff;
     --red: #ff3d5a;
     --amber: #ffb800;
+    --purple: #b47aff;
     --bg: #04080a;
     --panel: rgba(10, 18, 22, 0.75);
     --border: rgba(0, 255, 157, 0.15);
@@ -336,6 +337,7 @@
   .section:nth-child(1) { animation-delay: 0.05s; }
   .section:nth-child(2) { animation-delay: 0.1s; }
   .section:nth-child(3) { animation-delay: 0.15s; }
+  .section:nth-child(4) { animation-delay: 0.2s; }
 
   .section-header {
     display: flex;
@@ -357,6 +359,10 @@
     border-radius: 10px;
     flex-shrink: 0;
     box-shadow: 0 0 20px rgba(0, 255, 157, 0.3);
+  }
+  .section-num.purple {
+    background: linear-gradient(135deg, var(--purple), var(--cyan));
+    box-shadow: 0 0 20px rgba(180, 122, 255, 0.4);
   }
   .section-title {
     font-size: 17px;
@@ -444,6 +450,12 @@
     cursor: not-allowed;
     transform: none;
     box-shadow: none;
+  }
+  button.action.purple {
+    background: linear-gradient(135deg, var(--purple), var(--cyan));
+  }
+  button.action.purple:hover:not(:disabled) {
+    box-shadow: 0 10px 30px rgba(180, 122, 255, 0.4);
   }
 
   button.secondary {
@@ -561,6 +573,114 @@
 
   #stringsArea { display: none; margin-top: 20px; }
 
+  /* ===== CIFRADO ===== */
+  .cipher-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .cipher-card {
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid var(--border);
+    padding: 18px;
+    border-radius: 12px;
+    transition: all 0.25s;
+    cursor: pointer;
+  }
+  .cipher-card:hover {
+    border-color: var(--purple);
+    background: rgba(30, 0, 50, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(180, 122, 255, 0.15);
+  }
+  .cipher-card.selected {
+    border-color: var(--purple);
+    background: rgba(40, 0, 70, 0.5);
+    box-shadow: 0 0 0 3px rgba(180, 122, 255, 0.2), 0 8px 24px rgba(180, 122, 255, 0.3);
+  }
+  .cipher-card h4 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+  }
+  .cipher-card p {
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+  .cipher-card .tag {
+    display: inline-block;
+    font-size: 9px;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 2px 7px;
+    border-radius: 100px;
+    margin-top: 8px;
+    letter-spacing: 1px;
+    font-weight: 700;
+  }
+  .cipher-card .tag.safe {
+    background: rgba(0, 255, 157, 0.15);
+    color: var(--green);
+    border: 1px solid rgba(0, 255, 157, 0.3);
+  }
+  .cipher-card .tag.unsafe {
+    background: rgba(255, 184, 0, 0.15);
+    color: var(--amber);
+    border: 1px solid rgba(255, 184, 0, 0.3);
+  }
+
+  .cipher-options {
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid var(--border);
+    padding: 18px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .cipher-options.show { display: block; animation: fadeUp 0.3s; }
+
+  .opt-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .opt-row:last-child { margin-bottom: 0; }
+  .opt-row label {
+    font-size: 12px;
+    color: var(--text-mid);
+    letter-spacing: 1px;
+    font-weight: 600;
+    min-width: 90px;
+  }
+  .opt-row input[type="text"],
+  .opt-row input[type="number"] {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 9px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    border-radius: 8px;
+    transition: all 0.2s;
+    flex: 1;
+    min-width: 100px;
+  }
+  .opt-row input:focus {
+    border-color: var(--purple);
+    box-shadow: 0 0 0 3px rgba(180, 122, 255, 0.15);
+  }
+  .opt-row .help {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
   .footer {
     text-align: center;
     padding: 20px;
@@ -670,6 +790,75 @@
     </div>
   </div>
 
+  <!-- CIFRADO -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num purple">🔒</div>
+      <div class="section-title">Cifrado de Strings</div>
+    </div>
+    <div class="section-body">
+      <div class="hint">
+        Elegí un cifrado y aplicalo a los strings del textarea de arriba. Los cifrados
+        <strong>seguros</strong> mantienen el largo (funcionan en el .bytes).
+        Los <strong>peligrosos</strong> cambian el largo y pueden romper los offsets.
+      </div>
+
+      <div class="cipher-grid">
+        <div class="cipher-card" data-cipher="xor" onclick="selectCipher('xor')">
+          <h4>XOR Cifrado</h4>
+          <p>XOR byte a byte con una clave de texto. El clásico de modding.</p>
+          <span class="tag safe">LARGO SEGURO</span>
+        </div>
+        <div class="cipher-card" data-cipher="rot" onclick="selectCipher('rot')">
+          <h4>ROT-N</h4>
+          <p>Rota cada carácter N posiciones. Simple, mantiene el largo.</p>
+          <span class="tag safe">LARGO SEGURO</span>
+        </div>
+        <div class="cipher-card" data-cipher="reverse" onclick="selectCipher('reverse')">
+          <h4>Reverse</h4>
+          <p>Invierte los caracteres de cada string. Mantiene el largo.</p>
+          <span class="tag safe">LARGO SEGURO</span>
+        </div>
+        <div class="cipher-card" data-cipher="b64" onclick="selectCipher('b64')">
+          <h4>Base64</h4>
+          <p>Codifica a Base64. Alarga el string ~33%.</p>
+          <span class="tag unsafe">CAMBIA LARGO</span>
+        </div>
+        <div class="cipher-card" data-cipher="hex" onclick="selectCipher('hex')">
+          <h4>Hex Encode</h4>
+          <p>Convierte a hexadecimal. Duplica el largo.</p>
+          <span class="tag unsafe">CAMBIA LARGO</span>
+        </div>
+      </div>
+
+      <div class="cipher-options" id="cipherOpts">
+        <div class="opt-row" id="optKey" style="display:none;">
+          <label>Clave XOR</label>
+          <input type="text" id="xorKey" value="MDZ" placeholder="ej: MDZ">
+          <span class="help">se repite cíclicamente</span>
+        </div>
+        <div class="opt-row" id="optRot" style="display:none;">
+          <label>Rotación N</label>
+          <input type="number" id="rotN" value="13" min="1" max="25">
+          <span class="help">1-25</span>
+        </div>
+        <div class="opt-row" id="optMode" style="display:none;">
+          <label>Modo</label>
+          <button class="secondary" id="btnEncode" onclick="setMode('encode')" style="border-color: var(--purple); color: var(--purple);">ENCODE</button>
+          <button class="secondary" id="btnDecode" onclick="setMode('decode')">DECODE</button>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="action purple" onclick="applyCipher('all')" id="btnApplyAll" disabled>🔐 Aplicar a TODOS</button>
+        <button class="action purple" onclick="applyCipher('visible')" id="btnApplyVisible" disabled>👁 Aplicar solo a VISIBLES</button>
+        <button class="secondary" onclick="resetStrings()" id="btnReset" disabled>↺ Resetear (volver al original)</button>
+      </div>
+
+      <div class="log" id="log3">> elegí un cifrado arriba...</div>
+    </div>
+  </div>
+
   <!-- 2 -->
   <div class="section">
     <div class="section-header">
@@ -678,7 +867,7 @@
     </div>
     <div class="section-body">
       <div class="hint">
-        Editá los strings arriba, luego apretá <strong>"Aplicar Cambios"</strong>.
+        Editá los strings arriba (o cifralos), luego apretá <strong>"Aplicar Cambios"</strong>.
         Los nuevos strings <strong>no pueden ser más largos</strong> que los originales — se rellenan con <code>0x00</code>.
         <br><br>
         <strong>Importante:</strong> solo editá el texto a la derecha del <code>(001)</code>. No toques el número.
@@ -727,7 +916,7 @@
 // CONFIG
 // ============================================================
 const API_BASE = 'https://new-api-3thk.onrender.com';
-const SESSION_KEY = 'mdz_session_v4';
+const SESSION_KEY = 'mdz_session_v8';
 
 // ============================================================
 // TOASTS
@@ -745,7 +934,7 @@ function toast(msg, type = 'ok', dur = 3200) {
 }
 
 // ============================================================
-// LOGIN — cascada de endpoints para verificar la key
+// LOGIN — cascada de endpoints (el que funciona)
 // ============================================================
 async function doLogin() {
   const input = document.getElementById('keyInput');
@@ -762,7 +951,6 @@ async function doLogin() {
   btn.disabled = true;
   input.disabled = true;
 
-  // endpoints a probar, en orden
   const attempts = [
     { url: '/api/verify',       body: { key } },
     { url: '/api/verify',       body: { password: key } },
@@ -795,13 +983,11 @@ async function doLogin() {
         break;
       }
 
-      // guardamos el último detail real que devolvió el server
       if (data && (data.detail || data.message || data.error)) {
         lastDetail = String(data.detail || data.message || data.error);
       }
     } catch (err) {
       console.warn('[login try ' + (i+1) + ']', err);
-      // timeout o red — seguimos probando el siguiente
       if (err.name === 'AbortError') lastDetail = 'timeout en ' + a.url;
     }
   }
@@ -817,7 +1003,6 @@ async function doLogin() {
   btnText.textContent = 'ENTRAR';
 }
 
-// ==== Valida si el response indica éxito ====
 function isValidVerify(d) {
   if (!d) return false;
   if (d === true || d === 'true') return true;
@@ -836,7 +1021,6 @@ function isValidVerify(d) {
   return false;
 }
 
-// ==== Acepta el login y guarda sesión ====
 function acceptLogin(data, key, usedEndpoint) {
   const token = (data && (data.token || data.access_token || data.session)) || null;
   sessionStorage.setItem(SESSION_KEY, JSON.stringify({
@@ -850,7 +1034,6 @@ function acceptLogin(data, key, usedEndpoint) {
   setTimeout(enterPanel, 400);
 }
 
-// ==== fetch con timeout ====
 async function fetchWithTimeout(url, opts) {
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), 12000);
@@ -911,6 +1094,8 @@ let originalBytes = null;
 let strings = [];
 let patchedBytes = null;
 let allStringsText = '';
+let currentMode = 'encode';
+let selectedCipher = null;
 
 const numFmt = n => '(' + String(n).padStart(3, '0') + ')';
 
@@ -932,7 +1117,7 @@ async function extractStrings() {
       if (start !== -1 && i - start >= 4) {
         let text = '';
         for (let j = start; j < i; j++) text += String.fromCharCode(originalBytes[j]);
-        strings.push({ offset: start, length: i - start, text, _idx: strings.length });
+        strings.push({ offset: start, length: i - start, text, original: text, _idx: strings.length });
       }
       start = -1;
     }
@@ -940,7 +1125,7 @@ async function extractStrings() {
   if (start !== -1 && originalBytes.length - start >= 4) {
     let text = '';
     for (let j = start; j < originalBytes.length; j++) text += String.fromCharCode(originalBytes[j]);
-    strings.push({ offset: start, length: originalBytes.length - start, text, _idx: strings.length });
+    strings.push({ offset: start, length: originalBytes.length - start, text, original: text, _idx: strings.length });
   }
 
   allStringsText = strings.map((s, i) => numFmt(i + 1) + ' ' + s.text).join('\n');
@@ -956,6 +1141,9 @@ async function extractStrings() {
   document.getElementById('fileSize').textContent = originalBytes.length;
   document.getElementById('btnDownloadTxt').disabled = false;
   document.getElementById('btnApply').disabled = false;
+  document.getElementById('btnApplyAll').disabled = false;
+  document.getElementById('btnApplyVisible').disabled = false;
+  document.getElementById('btnReset').disabled = false;
   document.getElementById('btnDownload').disabled = true;
   patchedBytes = null;
 
@@ -986,40 +1174,166 @@ function downloadStringsTxt() {
   toast('strings.txt descargado', 'ok');
 }
 
+// ============================================================
+// CIFRADO
+// ============================================================
+function selectCipher(c) {
+  selectedCipher = c;
+  document.querySelectorAll('.cipher-card').forEach(el => {
+    el.classList.toggle('selected', el.dataset.cipher === c);
+  });
+  document.getElementById('cipherOpts').classList.add('show');
+  document.getElementById('optKey').style.display  = c === 'xor' ? 'flex' : 'none';
+  document.getElementById('optRot').style.display  = c === 'rot' ? 'flex' : 'none';
+  document.getElementById('optMode').style.display = (c === 'b64' || c === 'hex') ? 'flex' : 'none';
+  if (c === 'b64' || c === 'hex') setMode('encode');
+  log('log3', 'cifrado seleccionado: ' + c.toUpperCase(), '');
+}
+
+function setMode(m) {
+  currentMode = m;
+  const bE = document.getElementById('btnEncode');
+  const bD = document.getElementById('btnDecode');
+  if (m === 'encode') {
+    bE.style.borderColor = 'var(--purple)'; bE.style.color = 'var(--purple)';
+    bD.style.borderColor = ''; bD.style.color = '';
+  } else {
+    bD.style.borderColor = 'var(--purple)'; bD.style.color = 'var(--purple)';
+    bE.style.borderColor = ''; bE.style.color = '';
+  }
+}
+
+function xorStr(str, key) {
+  if (!key) return str;
+  let out = '';
+  for (let i = 0; i < str.length; i++)
+    out += String.fromCharCode(str.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+  return out;
+}
+function rotStr(str, n) {
+  let out = '';
+  for (const ch of str) {
+    const c = ch.charCodeAt(0);
+    if (c >= 65 && c <= 90) out += String.fromCharCode(((c - 65 + n + 26) % 26) + 65);
+    else if (c >= 97 && c <= 122) out += String.fromCharCode(((c - 97 + n + 26) % 26) + 97);
+    else out += ch;
+  }
+  return out;
+}
+function reverseStr(str) { return str.split('').reverse().join(''); }
+function b64Encode(str) { try { return btoa(unescape(encodeURIComponent(str))); } catch { return str; } }
+function b64Decode(str) { try { return decodeURIComponent(escape(atob(str))); } catch { return str; } }
+function hexEncode(str) { let o = ''; for (let i = 0; i < str.length; i++) o += str.charCodeAt(i).toString(16).padStart(2, '0'); return o; }
+function hexDecode(str) {
+  if (!/^[0-9a-fA-F]+$/.test(str) || str.length % 2 !== 0) return str;
+  let o = '';
+  for (let i = 0; i < str.length; i += 2) o += String.fromCharCode(parseInt(str.substr(i, 2), 16));
+  return o;
+}
+
+function applyCipher(scope) {
+  if (!selectedCipher) { toast('Elegí un cifrado primero', 'warn'); return; }
+  if (strings.length === 0) { toast('Extraé strings primero', 'warn'); return; }
+
+  const xorKey = document.getElementById('xorKey').value || 'MDZ';
+  const rotN = Math.max(1, Math.min(25, parseInt(document.getElementById('rotN').value) || 13));
+  const ta = document.getElementById('stringsOutput');
+
+  let targetIdxs;
+  if (scope === 'visible') {
+    const lines = ta.value.split('\n');
+    targetIdxs = new Set();
+    for (const line of lines) {
+      const m = line.match(/^\((\d+)\)\s/);
+      if (m) targetIdxs.add(parseInt(m[1], 10) - 1);
+    }
+  } else {
+    targetIdxs = new Set(strings.map((_, i) => i));
+  }
+
+  let count = 0;
+  const encode = currentMode === 'encode';
+
+  for (const idx of targetIdxs) {
+    const s = strings[idx];
+    if (!s) continue;
+    let out = s.text;
+    try {
+      switch (selectedCipher) {
+        case 'xor':     out = xorStr(s.text, xorKey); break;
+        case 'rot':     out = rotStr(s.text, encode ? rotN : -rotN); break;
+        case 'reverse': out = reverseStr(s.text); break;
+        case 'b64':     out = encode ? b64Encode(s.text) : b64Decode(s.text); break;
+        case 'hex':     out = encode ? hexEncode(s.text) : hexDecode(s.text); break;
+      }
+    } catch(e) { continue; }
+    s.text = out;
+    count++;
+  }
+
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  if (!q) {
+    ta.value = strings.map(s => numFmt(s._idx + 1) + ' ' + s.text).join('\n');
+  } else {
+    const filtered = strings.filter(s => s.text.toLowerCase().includes(q));
+    ta.value = filtered.map(s => numFmt(s._idx + 1) + ' ' + s.text).join('\n');
+  }
+
+  let tooLong = 0;
+  for (const s of strings) if (s.text.length > s.original.length) tooLong++;
+
+  log('log3', selectedCipher.toUpperCase() + ' ' + (encode ? 'ENCODE' : 'DECODE') + ' aplicado a ' + count + ' strings', 'ok');
+  if (tooLong > 0) log('log3', '⚠ ' + tooLong + ' strings quedaron más largos que el original', 'err');
+
+  toast(selectedCipher.toUpperCase() + ' aplicado a ' + count + ' strings', tooLong ? 'warn' : 'ok');
+}
+
+function resetStrings() {
+  if (strings.length === 0) return;
+  if (!confirm('¿Volver todos los strings al original?')) return;
+  for (const s of strings) s.text = s.original;
+  document.getElementById('searchInput').value = '';
+  document.getElementById('stringsOutput').value = strings.map(s => numFmt(s._idx + 1) + ' ' + s.text).join('\n');
+  document.getElementById('shownStrings').textContent = strings.length;
+  log('log3', 'strings reseteados al original', 'ok');
+  toast('Strings reseteados', 'ok');
+}
+
+// ============================================================
+// APLICAR CAMBIOS AL BINARIO
+// ============================================================
 function applyChanges() {
   if (!originalBytes) { log('log2', 'ERROR: primero extraé strings', 'err'); return; }
 
   const lines = document.getElementById('stringsOutput').value.split('\n');
-  patchedBytes = new Uint8Array(originalBytes);
-
-  let applied = 0, skipped = 0, errors = 0;
-  const errList = [];
-
   for (const line of lines) {
     const m = line.match(/^\((\d+)\)\s(.*)$/);
     if (!m) continue;
     const idx = parseInt(m[1], 10) - 1;
-    const newText = m[2];
-    const orig = strings[idx];
-    if (!orig) { skipped++; continue; }
-    if (newText === orig.text) continue;
+    if (strings[idx]) strings[idx].text = m[2];
+  }
 
-    if (newText.length > orig.length) {
+  patchedBytes = new Uint8Array(originalBytes);
+
+  let applied = 0, errors = 0;
+  const errList = [];
+
+  for (const s of strings) {
+    if (s.text === s.original) continue;
+    if (s.text.length > s.original.length) {
       errors++;
-      errList.push(numFmt(idx + 1) + ' nuevo (' + newText.length + ') > original (' + orig.length + ')');
+      errList.push(numFmt(s._idx + 1) + ' (' + s.text.length + ' > ' + s.original.length + ')');
       continue;
     }
-
-    for (let i = 0; i < newText.length; i++)
-      patchedBytes[orig.offset + i] = newText.charCodeAt(i) & 0xff;
-    for (let i = newText.length; i < orig.length; i++)
-      patchedBytes[orig.offset + i] = 0x00;
+    for (let i = 0; i < s.text.length; i++)
+      patchedBytes[s.offset + i] = s.text.charCodeAt(i) & 0xff;
+    for (let i = s.text.length; i < s.original.length; i++)
+      patchedBytes[s.offset + i] = 0x00;
     applied++;
   }
 
   document.getElementById('log2').innerHTML = '';
   log('log2', 'Cambios aplicados: ' + applied, applied > 0 ? 'ok' : '');
-  if (skipped) log('log2', 'Sin match: ' + skipped, 'warn');
   if (errors) {
     log('log2', 'Rechazados: ' + errors, 'err');
     errList.slice(0, 8).forEach(e => log('log2', '  → ' + e, 'err'));
