@@ -573,7 +573,6 @@
 
   #stringsArea { display: none; margin-top: 20px; }
 
-  /* ===== CIFRADO ===== */
   .cipher-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -915,8 +914,8 @@
 // ============================================================
 // CONFIG
 // ============================================================
-const API_BASE = 'https://new-api-3thk.onrender.com';
-const SESSION_KEY = 'mdz_session_v9';
+const API_BASE = 'https://petermods.freecpanel.shop';
+const SESSION_KEY = 'mdz_session_v10';
 
 // ============================================================
 // TOASTS
@@ -934,7 +933,7 @@ function toast(msg, type = 'ok', dur = 3200) {
 }
 
 // ============================================================
-// LOGIN — header X-License-Key (el que funciona)
+// LOGIN — header X-License-Key
 // ============================================================
 async function doLogin() {
   const input = document.getElementById('keyInput');
@@ -948,7 +947,6 @@ async function doLogin() {
   input.disabled = true;
   btnText.innerHTML = '<span class="spinner"></span>&nbsp; VERIFICANDO...';
 
-  // device id random persistente por sesión
   let deviceId = sessionStorage.getItem('mdz_device_id');
   if (!deviceId) {
     deviceId = 'web-' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
